@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ORBITAL PULSE — Space Mission Design & Crisis Simulation Game</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+  <!-- Three.js from CDN with fallback -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <div id="app-container">
+    
+    <!-- TOP BAR (Section 8) -->
+    <header id="top-bar">
+      <div class="brand-section">
+        <div class="logo-badge">
+          <span>🚀</span> ORBITAL PULSE
+        </div>
+        <span id="display-cml-badge" class="cml-badge">CML 1 – Cadet</span>
+        <span id="display-mission-name" style="font-size: 0.85rem; font-weight: 600; color: #cbd5e1;">Operation Terra-Pulse</span>
+      </div>
+
+      <!-- Fair-Play Mission Clock & Status (Section 5.1 & 5.2) -->
+      <div class="mission-clock-container">
+        <div class="clock-display">
+          <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Mission Clock:</span>
+          <span id="display-clock-val" class="clock-val">00:00</span>
+          <span id="display-clock-target" class="clock-target">/ 08:00</span>
+        </div>
+        <div id="display-freeze-indicator" class="freeze-indicator" style="display: none;">
+          ❄️ CLOCK FROZEN (45s)
+        </div>
+      </div>
+
+      <!-- Top Action Controls: Hints, Astro-Calculus, Urspace Guide -->
+      <div class="top-actions">
+        <!-- 5-Hint Bar (Section 5.4) -->
+        <div id="btn-spend-hint" class="hint-bar" title="Spend 1 Diagnostic Hint to highlight bottleneck">
+          <span class="hint-star">★</span>
+          <span style="font-size: 0.75rem; font-weight: 600; color: var(--accent-gold);">HINTS:</span>
+          <span id="display-hint-count" class="hint-count">5/5</span>
+        </div>
+
+        <!-- Astro-Calculus Refill Terminal Button -->
+        <button id="btn-open-refill" class="btn-secondary" title="Open 90s math challenge to refill hints">
+          <span>📐</span> Astro-Calculus
+        </button>
+
+        <!-- Urspace Guide Glowing Badge (Section 3.4) -->
+        <button id="btn-open-urspace" class="btn-secondary btn-urspace" title="Open interactive micro-tutorial">
+          <span>💡</span> Urspace Guide
+        </button>
+
+        <!-- Mastery XP & Room Code Badge -->
+        <div style="display: flex; flex-direction: column; align-items: flex-end; font-family: var(--font-mono); font-size: 0.72rem;">
+          <span style="color: var(--accent-purple); font-weight: 700;" id="display-mastery-xp">0 XP</span>
+          <span style="color: var(--text-muted);">ROOM: <strong id="display-room-code" style="color: var(--accent-cyan);">----</strong></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN WORKSPACE SPLIT (Section 8) -->
+    <main id="main-deck">
+      
+      <!-- LEFT PANEL: Dynamic Mission Control Station Tabs & Component Selector -->
+      <aside id="left-panel">
+        <div class="panel-heading">
+          <span>Mission Stations</span>
+          <span style="font-size: 0.7rem; color: var(--text-muted);">MDL Workspace</span>
+        </div>
+
+        <!-- 4 Mission Stations Tabs -->
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Station 1: Mission & Budget -->
+          <div id="tab-station_1" class="station-card glass-panel active">
+            <div class="station-header">
+              <span class="station-title">💰 Stn 1: Mission & Budget</span>
+              <span class="station-owner-tag">Dir. Sterling</span>
+            </div>
+            <div id="preview-station_1" class="component-selected-preview">Not equipped</div>
+          </div>
+
+          <!-- Station 2: Platform & Energy -->
+          <div id="tab-station_2" class="station-card glass-panel">
+            <div class="station-header">
+              <span class="station-title">⚡ Stn 2: Platform & Energy</span>
+              <span class="station-owner-tag">Eng. Chen</span>
+            </div>
+            <div id="preview-station_2" class="component-selected-preview">Not equipped</div>
+          </div>
+
+          <!-- Station 3: Payload & Bio-Systems -->
+          <div id="tab-station_3" class="station-card glass-panel">
+            <div class="station-header">
+              <span class="station-title">🔬 Stn 3: Payload & Bio</span>
+              <span class="station-owner-tag">Dr. Rostova</span>
+            </div>
+            <div id="preview-station_3" class="component-selected-preview">Not equipped</div>
+          </div>
+
+          <!-- Station 4: Flight & Comms -->
+          <div id="tab-station_4" class="station-card glass-panel">
+            <div class="station-header">
+              <span class="station-title">📡 Stn 4: Flight & Comms</span>
+              <span class="station-owner-tag">Cmdr. Vance</span>
+            </div>
+            <div id="preview-station_4" class="component-selected-preview">Not equipped</div>
+          </div>
+        </div>
+
+        <!-- Component List for currently selected station -->
+        <div style="margin-top: 10px;">
+          <div class="panel-heading">
+            <span>Hardware Catalog</span>
+            <span style="font-size: 0.7rem; color: var(--accent-cyan);">Click to Equip</span>
+          </div>
+          <div id="station-components-list" class="component-choice-list">
+            <!-- Populated dynamically by app.js -->
+          </div>
+        </div>
+      </aside>
+
+      <!-- CENTER STAGE: Interactive 3D Spacecraft & Trajectory Globe (Section 8) -->
+      <section id="center-stage">
+        <div id="canvas-container">
+          <!-- Three.js Canvas mounted here -->
+
+          <!-- HUD Telemetry Overlay -->
+          <div class="stage-overlay-hud">
+            <div class="hud-title">Orbital Trajectory & System Model</div>
+            <div class="hud-telemetry">Telemetry Feed: 100% Locked | Solar Vector: +X</div>
+            <div class="hud-telemetry">Attitude: 3-Axis Stabilized | Keplerian Elements: Validated</div>
+          </div>
+
+          <!-- Stage View Toggle Buttons -->
+          <div class="stage-controls">
+            <button id="btn-view-spacecraft" class="btn-secondary" style="font-size: 0.75rem;">
+              🛰️ Spacecraft Bus
+            </button>
+            <button id="btn-view-orbit" class="btn-secondary" style="font-size: 0.75rem;">
+              🌍 3D Orbit Globe
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT SIDEBAR: Live 6-Axis Trade-Off Radar & Vital Gauges (Section 8) -->
+      <aside id="right-panel">
+        
+        <!-- 6-Axis Trade-Off Radar Card -->
+        <div class="radar-card glass-panel">
+          <div class="panel-heading">
+            <span>6-Axis Trade-Off Radar</span>
+            <span style="font-size: 0.7rem; color: var(--accent-cyan);">Multi-Domain</span>
+          </div>
+          <div id="radar-svg-container">
+            <!-- SVG Radar dynamically rendered by radar.js -->
+          </div>
+        </div>
+
+        <!-- Vital Neon Gauges -->
+        <div class="vital-meters-list glass-panel">
+          <div class="panel-heading">
+            <span>Vital Constraints</span>
+            <span style="font-size: 0.7rem; color: var(--accent-gold);">Real-Time Gate</span>
+          </div>
+
+          <!-- Mass Gate -->
+          <div class="meter-item">
+            <div class="meter-label-row">
+              <span style="color: #94a3b8;">Chassis Mass</span>
+              <span id="meter-mass-val" style="font-family: var(--font-mono); color: var(--accent-cyan);">-- / -- kg</span>
+            </div>
+            <div class="meter-track">
+              <div id="meter-mass-fill" class="meter-fill normal" style="width: 20%;"></div>
+            </div>
+          </div>
+
+          <!-- Power & Eclipse Battery DoD -->
+          <div class="meter-item">
+            <div class="meter-label-row">
+              <span style="color: #94a3b8;">Eclipse Battery DoD</span>
+              <span id="meter-power-val" style="font-family: var(--font-mono); color: var(--accent-gold);">DoD: 0%</span>
+            </div>
+            <div class="meter-track">
+              <div id="meter-power-fill" class="meter-fill normal" style="width: 15%;"></div>
+            </div>
+          </div>
+
+          <!-- Financial Budget Cap -->
+          <div class="meter-item">
+            <div class="meter-label-row">
+              <span style="color: #94a3b8;">Budget Allocation</span>
+              <span id="meter-budget-val" style="font-family: var(--font-mono); color: #34d399;">$0M / $0M</span>
+            </div>
+            <div class="meter-track">
+              <div id="meter-budget-fill" class="meter-fill normal" style="width: 25%;"></div>
+            </div>
+          </div>
+
+          <!-- Downlink Data Buffer -->
+          <div class="meter-item">
+            <div class="meter-label-row">
+              <span style="color: #94a3b8;">Data Downlink Margin</span>
+              <span id="meter-data-val" style="font-family: var(--font-mono); color: #a855f7;">0 / 0 GB</span>
+            </div>
+            <div class="meter-track">
+              <div id="meter-data-fill" class="meter-fill normal" style="width: 50%;"></div>
+            </div>
+          </div>
+
+          <!-- Thermal & Cryocooling -->
+          <div class="meter-item">
+            <div class="meter-label-row">
+              <span style="color: #94a3b8;">Thermal Loop / Cryo</span>
+              <span id="meter-thermal-val" style="font-family: var(--font-mono); color: #38bdf8;">Nominal</span>
+            </div>
+            <div class="meter-track">
+              <div id="meter-thermal-fill" class="meter-fill normal" style="width: 80%;"></div>
+            </div>
+          </div>
+
+          <!-- Crew Biomedicine & Science Yield -->
+          <div class="meter-item">
+            <div class="meter-label-row">
+              <span style="color: #94a3b8;">Crew Vitals & Science</span>
+              <span id="meter-bio-val" style="font-family: var(--font-mono); color: var(--accent-rose);">100%</span>
+            </div>
+            <div class="meter-track">
+              <div id="meter-bio-fill" class="meter-fill normal" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <!-- Subsystem Bottleneck Alert Box -->
+          <div id="systems-alert-box" style="display: none; background: rgba(244, 63, 94, 0.15); border: 1px solid #f43f5e; color: #fecdd3; padding: 8px 10px; border-radius: 6px; font-size: 0.72rem; line-height: 1.3; margin-top: 4px;">
+            ⚠️ Bottleneck detected!
+          </div>
+
+        </div>
+
+      </aside>
+
+    </main>
+
+    <!-- BOTTOM DOCK: Animated Character Conversation Hub (Section 8) -->
+    <footer id="bottom-dock" class="glass-panel">
+      
+      <!-- Character Avatar & Title -->
+      <div class="dialogue-active-character">
+        <div id="dock-char-avatar" class="char-avatar-ring">👩‍🚀</div>
+        <div class="char-info">
+          <span id="dock-char-name" class="char-name">Dr. Elena Rostova</span>
+          <span id="dock-char-title" class="char-title">Payload & Bio-Systems Lead</span>
+        </div>
+      </div>
+
+      <!-- Speech Bubble -->
+      <div class="dialogue-bubble-box">
+        <div id="dock-dialogue-text" class="dialogue-bubble-text">
+          "Welcome to Mission Control! Review your station constraints and trade studies before we fire the simulation."
+        </div>
+      </div>
+
+      <!-- Action Controls & Team Radio -->
+      <div class="dock-controls">
+        <button id="btn-main-action" class="btn-primary-launch">
+          🚀 Simulate Orbit
+        </button>
+        <form id="chat-form" style="display: flex; gap: 4px; margin-top: 2px;">
+          <input type="text" id="chat-input" placeholder="Squad radio comms..." 
+            style="flex: 1; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-glass); border-radius: 6px; color: white; padding: 4px 8px; font-size: 0.75rem;" />
+          <button type="submit" class="btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;">📡</button>
+        </form>
+      </div>
+
+    </footer>
+
+  </div>
+
+  <!-- ===================================================================
+       MODAL WINDOWS: WELCOME, CREATE, JOIN, URSPACE, ASTRO-CALCULUS, CRISIS, DEBRIEF
+       =================================================================== -->
+
+  <!-- 1. Welcome / Play Mode Modal -->
+  <div id="welcome-modal" class="modal-overlay">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🌌</span> ORBITAL PULSE — NASA Mission Design Lab
+        </div>
+      </div>
+      <div style="font-size: 0.9rem; line-height: 1.5; color: #cbd5e1;">
+        Welcome to <strong>ORBITAL PULSE</strong>, a story-driven multidisciplinary space mission design and crisis simulation game built for the <strong>NASA Space Apps Challenge 2026</strong>.
+        <br><br>
+        Choose your mission format to begin:
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px;">
+        <button id="btn-create-game" class="btn-secondary" style="padding: 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; background: rgba(14, 165, 233, 0.2); border-color: var(--accent-cyan);">
+          <span style="font-size: 1.1rem; font-weight: 700; color: var(--accent-cyan);">🌟 Host New Mission</span>
+          <span style="font-size: 0.75rem; color: #94a3b8;">1-Player Solo Commander, 2-Player Duo, or 4-Player Squad</span>
+        </button>
+        <button id="btn-join-game" class="btn-secondary" style="padding: 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px;">
+          <span style="font-size: 1.1rem; font-weight: 700; color: var(--accent-gold);">🔗 Join with Room Code</span>
+          <span style="font-size: 0.75rem; color: #94a3b8;">Enter an active 4-digit multiplayer squad code</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Create Room Modal -->
+  <div id="create-game-modal" class="modal-overlay">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <div class="modal-title">Configure Mission Profile</div>
+        <button class="btn-close-modal">×</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Player Call Sign / Name</label>
+          <input type="text" id="create-player-name" value="Flight Director" 
+            style="width: 100%; padding: 8px 12px; border-radius: 6px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-glass); color: white;" />
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Play Mode (Section 3.1)</label>
+          <select id="create-mode-select" style="width: 100%; padding: 8px 12px; border-radius: 6px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-glass); color: white;">
+            <option value="1P">1-Player (Solo Commander + 3 AI Mission Specialists)</option>
+            <option value="2P">2-Player (Dual Command: Platform/Flight & Payload/Comms)</option>
+            <option value="4P">4-Player (Full Mission Squad: Budget, Platform, Payload, Flight)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Campaign Level (Section 4)</label>
+          <select id="create-level-select" style="width: 100%; padding: 8px 12px; border-radius: 6px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-glass); color: white;">
+            <option value="1">Level 1 (Easy – CML 1): Operation Terra-Pulse (6U CubeSat & Bio-Incubator)</option>
+            <option value="2">Level 2 (Easy-Med – CML 2): Operation Exo-Beacon (Sun-Earth L2 JWST Telescope)</option>
+            <option value="3">Level 3 (Med – CML 3): Operation Lunar-Vein (Shackleton Crater Water-Ice ISRU)</option>
+            <option value="4">Level 4 (Med-Hard – CML 4): Operation Lifeline (Crew Injury & Solar Storm)</option>
+            <option value="5">Level 5 (Hard/Boss – CML 5): Operation Star-Forge (Deep-Space Asteroid Psyche)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Custom 4-Digit Room Code (Optional)</label>
+          <input type="text" id="create-pref-code" placeholder="e.g. NASA, LUNA, 4821" maxlength="6"
+            style="width: 100%; padding: 8px 12px; border-radius: 6px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-glass); color: var(--accent-cyan); font-family: var(--font-mono); text-transform: uppercase;" />
+        </div>
+        <button id="btn-start-created-room" class="btn-primary-launch" style="margin-top: 10px;">
+          Initialize Mission Control Deck
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Join Room Modal -->
+  <div id="join-room-modal" class="modal-overlay">
+    <div class="modal-content glass-panel" style="max-width: 420px;">
+      <div class="modal-header">
+        <div class="modal-title">Join Squad Room</div>
+        <button class="btn-close-modal">×</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Player Call Sign</label>
+          <input type="text" id="join-player-name" value="Station Lead" 
+            style="width: 100%; padding: 8px 12px; border-radius: 6px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-glass); color: white;" />
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">4-Digit Squad Code</label>
+          <input type="text" id="join-room-code" placeholder="e.g. 7429" maxlength="6"
+            style="width: 100%; padding: 8px 12px; border-radius: 6px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-glass); color: var(--accent-gold); font-family: var(--font-mono); text-transform: uppercase; font-size: 1.2rem; text-align: center; letter-spacing: 2px;" />
+        </div>
+        <button id="btn-submit-join" class="btn-primary-launch" style="margin-top: 6px;">
+          Connect to Squad
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Urspace Guide Modal (Section 3.4) -->
+  <div id="urspace-modal" class="modal-overlay">
+    <div class="modal-content glass-panel" style="max-width: 700px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>💡</span> Urspace Guide — Interactive Space Engineering
+        </div>
+        <button class="btn-close-modal">×</button>
+      </div>
+      <div id="urspace-modal-body">
+        <!-- Rendered by tutorials.js with interactive micro-sliders -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Astro-Calculus Refill Terminal Modal (Section 5.4) -->
+  <div id="astro-calculus-modal" class="modal-overlay">
+    <div class="modal-content glass-panel" style="max-width: 640px;">
+      <div class="modal-header">
+        <div class="modal-title" style="color: var(--accent-gold);">
+          <span>📐</span> Astro-Calculus & Space Puzzle Terminal
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 0.75rem; color: var(--text-muted);">TIME LEFT:</span>
+          <span id="puzzle-clock" style="font-family: var(--font-mono); font-size: 1.1rem; color: var(--accent-rose); font-weight: 700;">90s</span>
+          <button class="btn-close-modal" style="margin-left: 10px;">×</button>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <span id="puzzle-concept" class="cml-badge" style="background: rgba(251, 191, 36, 0.15); border-color: rgba(251, 191, 36, 0.4); color: var(--accent-gold);">Calculus Concept</span>
+          <h3 id="puzzle-title" style="color: white; margin-top: 6px; font-size: 1.15rem;">Math Problem Title</h3>
+        </div>
+        <div id="puzzle-question" style="font-size: 0.9rem; line-height: 1.45; color: #e2e8f0; background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 8px; border: 1px solid var(--border-glass);">
+          Question text...
+        </div>
+        <div style="background: rgba(15, 23, 42, 0.9); padding: 8px 12px; border-radius: 6px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-cyan);">
+          Formula: <span id="puzzle-formula">---</span>
+        </div>
+        <div>
+          <button id="btn-toggle-puzzle-hint" class="btn-secondary" style="font-size: 0.75rem;">
+            🔍 View Step-by-Step Hint
+          </button>
+          <div id="puzzle-hint-text" style="display: none; font-size: 0.8rem; color: #fde68a; margin-top: 6px; padding: 8px; background: rgba(251, 191, 36, 0.1); border-radius: 6px;">
+            Hint text...
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; margin-top: 4px;">
+          <input type="number" id="puzzle-answer-input" step="any" placeholder="Numeric answer"
+            style="flex: 1; padding: 10px 14px; border-radius: 8px; background: rgba(15, 23, 42, 0.9); border: 1px solid var(--border-glass); color: white; font-family: var(--font-mono); font-size: 1rem;" />
+          <span id="puzzle-unit-badge" style="font-size: 0.85rem; color: var(--text-muted); min-width: 60px;">Units</span>
+          <button id="btn-submit-puzzle" class="btn-primary-launch" style="padding: 10px 20px;">
+            Submit Solution
+          </button>
+        </div>
+        <div id="puzzle-feedback-box"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Mid-Mission Crisis Voting Modal (Section 3.2, 4.4) -->
+  <div id="crisis-modal" class="modal-overlay">
+    <div class="modal-content glass-panel" style="max-width: 680px; border-color: var(--accent-rose); box-shadow: 0 0 30px rgba(244, 63, 94, 0.4);">
+      <div class="modal-header">
+        <div class="modal-title" style="color: var(--accent-rose);">
+          <span>🚨</span> <span id="crisis-title">MID-MISSION CRISIS EVENT</span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div id="crisis-narrative" style="font-size: 0.92rem; line-height: 1.5; color: #fee2e2; background: rgba(244, 63, 94, 0.1); padding: 14px; border-radius: 8px; border: 1px solid rgba(244, 63, 94, 0.3);">
+          Crisis text...
+        </div>
+        <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">
+          All Squad Members Must Cast Their Vote:
+        </div>
+        <div id="crisis-options-list" class="crisis-options-grid">
+          <!-- Populated by app.js -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Post-Mission Forensic Debrief Screen (Section 8, Section 5.3) -->
+  <div id="debrief-modal" class="modal-overlay">
+    <div class="modal-content glass-panel" style="max-width: 760px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>📋</span> NASA Mission Design Lab — Forensic Flight Debrief
+        </div>
+        <button class="btn-close-modal">×</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        
+        <!-- Score Hero -->
+        <div class="debrief-score-hero">
+          <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent-cyan); font-weight: 700;">
+            Final Mission Evaluation Score (S_final)
+          </div>
+          <div id="debrief-final-score" class="debrief-score-number">1140</div>
+          <div id="debrief-rank-title" style="font-size: 1.1rem; font-weight: 800; color: var(--accent-gold); margin-top: 4px;">
+            NASA Lead Mission Architect
+          </div>
+          <div id="debrief-cml-cert" style="font-size: 0.85rem; color: var(--accent-cyan); margin-top: 2px;">
+            CML 1 - FULL FLIGHT CERTIFICATION
+          </div>
+        </div>
+
+        <!-- Section 5.3 Time-Weighted Formula Breakdown -->
+        <div style="background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 8px; border: 1px solid var(--border-glass);">
+          <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--accent-cyan); font-weight: 700; margin-bottom: 6px;">
+            Scoring Equation Breakdown (Section 5.3)
+          </div>
+          <div id="debrief-formula-breakdown">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Forensic Root Cause Post-Mortem -->
+        <div id="debrief-forensic-report">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Real NASA Mission Match Card (Section 7) -->
+        <div id="debrief-nasa-match">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Iterate / Retry buttons -->
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+          <button id="btn-debrief-retry" class="btn-secondary">
+            🔄 Iterate Design
+          </button>
+          <button id="btn-debrief-next-level" class="btn-primary-launch">
+            🌌 Return to Mission Control
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Client Application Scripts -->
+  <script src="/static/js/audio.js"></script>
+  <script src="/static/js/radar.js"></script>
+  <script src="/static/js/scene3d.js"></script>
+  <script src="/static/js/tutorials.js"></script>
+  <script src="/static/js/app.js"></script>
+
+</body>
+</html>
