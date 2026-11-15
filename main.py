@@ -11,6 +11,9 @@ import argparse
 import webbrowser
 import uvicorn
 
+# Expose top-level FastAPI instance for Vercel deployment
+from orbital_pulse.server.app import app
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="ORBITAL PULSE - NASA Space Apps Challenge 2026")
